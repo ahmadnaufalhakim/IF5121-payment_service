@@ -112,7 +112,7 @@ def validate_payment() :
 
 @app.route("/update-payment-status", methods=["PUT"])
 def update_payment_status() :
-    data = request.get_json()
+    data = json.loads(request.get_json())
     invoice_number = data["invoice_number"]
     email = data["email"]
     result = data["result"]
