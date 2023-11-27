@@ -11,6 +11,8 @@ services:
     build:
       context: ./
       dockerfile: ./docker/Dockerfile.payment_microservice
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - rabbitmq
     volumes:
