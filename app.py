@@ -149,6 +149,9 @@ def update_payment_status() :
             payment_db.update_payment_status(invoice_number, "COMPLETED")
             if "BK" in invoice_number :
                 payment_db.update_payment_booking_status(invoice_number, "paid")
+                requests.post(
+                    f"{booking_service_url}/pay/{invoice_number}"
+                )
             elif "MB" in invoice_number :
                 requests.put(
                     f"{account_service_url}/update-status-membership/",
