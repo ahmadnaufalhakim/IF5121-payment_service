@@ -172,20 +172,20 @@ def update_payment_status() :
         response.status_code = 500
         return response
 
-@app.route("/apply-promo", methods=["POST"])
-def apply_promo() :
-    try :
-        data = request.get_json()
-        invoice_number = data["invoice_number"]
-        promo_id = data["promo_id"]
-        if "MB" in 
+# @app.route("/apply-promo", methods=["POST"])
+# def apply_promo() :
+#     try :
+#         data = request.get_json()
+#         invoice_number = data["invoice_number"]
+#         promo_id = data["promo_id"]
+#         if "MB" in 
 
-    except Exception as e :
-        response = jsonify({
-            "message": f"Exception occurred⛔! Exception: {e}"
-        })
-        response.status_code = 500
-        return response    
+#     except Exception as e :
+#         response = jsonify({
+#             "message": f"Exception occurred⛔! Exception: {e}"
+#         })
+#         response.status_code = 500
+#         return response    
 
 # Promo routes
 @app.route("/promo", methods=["POST"])
