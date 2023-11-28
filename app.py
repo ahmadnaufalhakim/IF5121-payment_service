@@ -248,7 +248,7 @@ def get_all_promos() :
 def get_promo_by_id(id) :
     try :
         id = int(id)
-        result = promo_db.get_by_id(id)
+        result = promo_db.get_by_id(id).serialize()
         response = jsonify({
             "result": result
         })
