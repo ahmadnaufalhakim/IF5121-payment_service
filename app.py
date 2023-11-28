@@ -173,6 +173,7 @@ def update_payment_status() :
         })
         response.status_code = 500
         return response
+    return Response(status=204)
 
 @app.route("/apply-promo", methods=["POST"])
 def apply_promo() :
