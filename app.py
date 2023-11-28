@@ -141,7 +141,7 @@ def validate_payment() :
 @app.route("/update-payment-status", methods=["PUT"])
 def update_payment_status() :
     try :
-        data = json.loads(request.get_json())
+        data = request.get_json(force=True)
         invoice_number = data["invoice_number"]
         email = data["email"]
         result = data["result"]
@@ -165,7 +165,7 @@ def update_payment_status() :
                     f"{booking_service_url}/cancel/{invoice_number}"
                 )
     except Exception as e :
-        print(e)
+        print(e.with_traceback())
         response = jsonify({
             "message": f"Exception occurred⛔! Exception: {e}"
         })
@@ -184,7 +184,8 @@ def update_payment_status() :
 #             })
 #             response.status_code = 400
 #             return response
-
+#         promo = promo_db.get_by_id(promo_id)
+#         if promo
 #     except Exception as e :
 #         response = jsonify({
 #             "message": f"Exception occurred⛔! Exception: {e}"
