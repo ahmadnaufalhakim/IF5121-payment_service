@@ -152,7 +152,7 @@ def update_payment_status() :
             elif "MB" in invoice_number :
                 requests.put(
                     f"{account_service_url}/update-status-membership/",
-                    data=jsonify({
+                    data=json.dumps({
                         "email": email,
                         "status": result
                     })
@@ -178,7 +178,12 @@ def update_payment_status() :
 #         data = request.get_json()
 #         invoice_number = data["invoice_number"]
 #         promo_id = data["promo_id"]
-#         if "MB" in 
+#         if "MB" in invoice_number :
+#             response = jsonify({
+#                 "message": f"Error⛔! Promo is only available for booking payments!",
+#             })
+#             response.status_code = 400
+#             return response
 
 #     except Exception as e :
 #         response = jsonify({
