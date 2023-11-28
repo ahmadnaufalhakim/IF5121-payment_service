@@ -175,26 +175,40 @@ def update_payment_status() :
         response.status_code = 500
         return response
 
-# @app.route("/apply-promo", methods=["POST"])
-# def apply_promo() :
-#     try :
-#         data = request.get_json()
-#         invoice_number = data["invoice_number"]
-#         promo_id = data["promo_id"]
-#         if "MB" in invoice_number :
-#             response = jsonify({
-#                 "message": f"Error⛔! Promo is only available for booking payments!",
-#             })
-#             response.status_code = 400
-#             return response
-#         promo = promo_db.get_by_id(promo_id)
-#         if promo
-#     except Exception as e :
-#         response = jsonify({
-#             "message": f"Exception occurred⛔! Exception: {e}"
-#         })
-#         response.status_code = 500
-#         return response    
+@app.route("/apply-promo", methods=["POST"])
+def apply_promo() :
+    try :
+        data = request.get_json()
+        invoice_number = data["invoice_number"]
+        promo_id = data["promo_id"]
+        if "MB" in invoice_number :
+            response = jsonify({
+                "message": f"Error⛔! Promo is only available for booking payments!",
+            })
+            response.status_code = 400
+            return response
+        payment = payment_db.get_by_invoice_number(invoice_number)
+        if payment is None :
+            response = jsonify({
+                "message": f"Error⛔! Payment with invoice number {payment.invoice_number} is not found!"
+            })
+            response.status_code = 400
+            return response
+        promo = promo_db.get_by_id(promo_id)
+        if promo is None :
+            response = jsonify({
+                "message": f"Error⛔! Promo with id {promo_id} is not found!"
+            })
+            response.status_code = 400
+            return response
+        payment_db.update_promo(invoice_number, promo.serialize())
+        return Response(status=204)
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response    
 
 # Promo routes
 @app.route("/promo", methods=["POST"])
@@ -231,7 +245,7 @@ def get_all_promos() :
 @app.route("/promo/<id>", methods=["GET"])
 def get_promo_by_id(id) :
     try :
-        id = escape(id)
+        id = int(id)
         result = promo_db.get_by_id(id)
         response = jsonify({
             "result": result
@@ -248,7 +262,7 @@ def get_promo_by_id(id) :
 @app.route("/promo/<id>", methods=["DELETE"])
 def delete_promo_by_id() :
     try :
-        id = escape(id)
+        id = int(id)
         promo_db.delete_by_id(id)
         return Response(status=204)
     except Exception as e :

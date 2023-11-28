@@ -67,7 +67,7 @@ class Payment(ABC) :
         )
     def serialize(self) :
         result = {
-            key.strip('_'): value for key, value in vars(self).items() if key not in ["payment_method", "status"]
+            key.strip('_'): value for key, value in vars(self).items() if key not in ["payment_method", "promo", "status"]
         }
         result["payment_method"] = self.payment_method.serialize()
         result["status"] = self.status.name
@@ -117,6 +117,14 @@ class BookingPayment(Payment) :
             f"Final price (net): {self._total_price}\n"
             f"Payment status: {self._status.name}\n"
         )
+    def serialize(self) :
+        result = {
+            key.strip('_'): value for key, value in vars(self).items() if key not in ["payment_method", "promo", "status"]
+        }
+        result["payment_method"] = self.payment_method.serialize()
+        result["promo"] = self.promo.serialize()
+        result["status"] = self.status.name
+        return result
 class MembershipPayment(Payment) :
     def __init__(self, invoice_number, total_price, payment_method: PaymentMethod, user, status=None):
         super().__init__(invoice_number, total_price, payment_method, status)

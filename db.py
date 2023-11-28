@@ -63,10 +63,11 @@ class PaymentDatabase :
         return result
 
     def get_by_invoice_number(self, invoice_number) :
-        if "BK" in invoice_number :
+        if "BK" in invoice_number and invoice_number in self.booking_payments :
             return self.booking_payments[invoice_number]
-        elif "MB" in invoice_number :
+        elif "MB" in invoice_number and invoice_number in self.membership_payments :
             return self.membership_payments[invoice_number]
+        return None
 
     def get_ongoing(self, email) :
         result = []
@@ -88,14 +89,26 @@ class PaymentDatabase :
                 result.append(self.membership_payments[invoice_number])
         return result
 
-    def update_payment_status(self, invoice_number, status) :
+    def update_payment_status(self, invoice_number, status:str) :
         if "BK" in invoice_number :
             self.booking_payments[invoice_number].status = status
         elif "MB" in invoice_number :
             self.membership_payments[invoice_number].status = status
         return
+    
+    def update_promo(self, invoice_number, promo:dict) :
+        promo_obj = Promo(
+            promo["id"],
+            promo["name"],
+            promo["discount"],
+            promo["max_discount"],
+            promo["info"],
+            promo["min_purchase"]
+        )
+        self.booking_payments[invoice_number].promo = promo_obj
+        return
 
-    def update_payment_booking_status(self, invoice_number, status) :
+    def update_payment_booking_status(self, invoice_number, status:str) :
         self.booking_payments[invoice_number].booking["status"] = status
         return
 
@@ -133,8 +146,9 @@ class PromoDatabase :
         return result
 
     def get_by_id(self, id) :
-        result = self.promos[id]
-        return result
+        if id in self.promos :
+            return self.promos[id]
+        return None
 
     def delete_by_id(self, id) :
         if id in self.promos: del self.promos[id]
