@@ -90,13 +90,13 @@ class BookingPayment(Payment) :
     @promo.setter
     def promo(self, promo:Promo) :
         if promo is not None and promo.is_valid(self._total_price) :
-            discounted_total_price = min(self._booking.total_price * (1-promo.discount), promo.max_discount)
+            discounted_total_price = min(self._booking["total_price"] * (1-promo.discount), promo.max_discount)
             self._total_price = discounted_total_price
             self._promo = promo
     # Methods
     def remove_promo(self) :
         if self._promo is not None :
-            self._total_price = self._booking.total_price
+            self._total_price = self._booking["total_price"]
         self._promo = None
     def pay(self) -> bool :
         if super().pay() :

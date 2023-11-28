@@ -168,7 +168,6 @@ def update_payment_status() :
                     f"{booking_service_url}/cancel/{invoice_number}"
                 )
     except Exception as e :
-        print(e.with_traceback())
         response = jsonify({
             "message": f"Exception occurred⛔! Exception: {e}"
         })
@@ -178,7 +177,7 @@ def update_payment_status() :
 @app.route("/apply-promo", methods=["POST"])
 def apply_promo() :
     try :
-        data = request.get_json()
+        data = request.get_json(force=True)
         invoice_number = data["invoice_number"]
         promo_id = data["promo_id"]
         if "MB" in invoice_number :
@@ -190,7 +189,7 @@ def apply_promo() :
         payment = payment_db.get_by_invoice_number(invoice_number)
         if payment is None :
             response = jsonify({
-                "message": f"Error⛔! Payment with invoice number {payment.invoice_number} is not found!"
+                "message": f"Error⛔! Payment with invoice number {invoice_number} is not found!"
             })
             response.status_code = 400
             return response
@@ -205,7 +204,7 @@ def apply_promo() :
         return Response(status=204)
     except Exception as e :
         response = jsonify({
-            "message": f"Exception occurred⛔! Exception: {e}"
+            "message": f"Exception occurred⛔!\nException: {e}"
         })
         response.status_code = 500
         return response    
