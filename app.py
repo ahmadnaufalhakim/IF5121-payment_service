@@ -248,9 +248,15 @@ def get_all_promos() :
 def get_promo_by_id(id) :
     try :
         id = int(id)
-        result = promo_db.get_by_id(id).serialize()
+        promo = promo_db.get_by_id(id)
+        if promo is None :
+            response = jsonify({
+                "message": f"Error⛔! Promo with id {id} is not found!"
+            })
+            response.status_code = 400
+            return response
         response = jsonify({
-            "result": result
+            "result": promo.serialize()
         })
         response.status_code = 200
         return response
