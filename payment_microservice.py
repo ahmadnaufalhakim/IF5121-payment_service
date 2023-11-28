@@ -84,11 +84,17 @@ def callback_validation(ch, method, properties, body) :
 
     invoice_number = message_body["invoice_number"]
     if "BK" in invoice_number :
-        payment = booking_payments[invoice_number]
+        try :
+            payment = booking_payments[invoice_number]
+        except KeyError :
+            return
         email = payment.booking["user"]["email"]
         del booking_payments[invoice_number]
     elif "MB" in invoice_number :
-        payment = membership_payments[invoice_number]
+        try :
+            payment = membership_payments[invoice_number]
+        except KeyError :
+            return
         email = payment.user["email"]
         del membership_payments[invoice_number]
     payment_method = payment.payment_method

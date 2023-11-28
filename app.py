@@ -1,15 +1,14 @@
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 import json
 from markupsafe import escape
 import os
 import pika
 import requests
 import sys
-from threading import Thread
 import time
 
-from db import PaymentDatabase
+from db import PaymentDatabase, PromoDatabase
 
 
 app = Flask(__name__)
@@ -32,9 +31,11 @@ channel.queue_declare(queue="payment_validation_queue")
 
 # Database connection
 payment_db = PaymentDatabase()
+promo_db = PromoDatabase()
 
+# Payment routes
 @app.route("/", methods=["POST"])
-def create() :
+def create_payment() :
     data = request.get_json()
     payments = payment_db.get_all()
     try :
@@ -48,7 +49,6 @@ def create() :
 
         payment_db.create(data)
         json_message = jsonify(data).get_data(as_text=True)
-        # Publish the payment validation request to RabbitMQ
         channel.basic_publish(
             exchange='',
             routing_key="payment_creation_queue",
@@ -68,73 +68,170 @@ def create() :
 
 @app.route("/", methods=["GET"])
 def get_all_payments() :
-    result = [payment.serialize() for payment in payment_db.get_all()]
-    response = jsonify({
-        "result": result
-    })
-    response.status_code = 200
-    return response
+    try :
+        result = [payment.serialize() for payment in payment_db.get_all()]
+        response = jsonify({
+            "result": result
+        })
+        response.status_code = 200
+        return response
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
 
 @app.route("/ongoing/<email>", methods=["GET"])
 def get_ongoing_payments(email) :
-    email = escape(email)
-    result = [payment.serialize() for payment in payment_db.get_ongoing(email)]
-    response = jsonify({
-        "result": result
-    })
-    response.status_code = 200
-    return response
+    try :
+        email = escape(email)
+        result = [payment.serialize() for payment in payment_db.get_ongoing(email)]
+        response = jsonify({
+            "result": result
+        })
+        response.status_code = 200
+        return response
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
 
 @app.route("/history/<email>", methods=["GET"])
 def get_history_payments(email) :
-    email = escape(email)
-    result = [payment.serialize() for payment in payment_db.get_history(email)]
-    response = jsonify({
-        "result": result
-    })
-    response.status_code = 200
-    return response
+    try :
+        email = escape(email)
+        result = [payment.serialize() for payment in payment_db.get_history(email)]
+        response = jsonify({
+            "result": result
+        })
+        response.status_code = 200
+        return response
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
 
 @app.route("/validate", methods=["POST"])
 def validate_payment() :
-    data = request.get_json()
-    message_body = {
-        "invoice_number": data["invoice_number"],
-    }
-    json_message = jsonify(message_body).get_data(as_text=True)
-    # Publish the payment validation request to RabbitMQ
-    channel.basic_publish(
-        exchange='',
-        routing_key="payment_validation_queue",
-        body=json_message
-    )
-    return "Payment validation request sent to RabbitMQ."
+    try :
+        data = request.get_json()
+        message_body = {
+            "invoice_number": data["invoice_number"],
+        }
+        json_message = jsonify(message_body).get_data(as_text=True)
+        # Publish the payment validation request to RabbitMQ
+        channel.basic_publish(
+            exchange='',
+            routing_key="payment_validation_queue",
+            body=json_message
+        )
+        return "Payment validation request sent to RabbitMQ."
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
 
 @app.route("/update-payment-status", methods=["PUT"])
 def update_payment_status() :
-    data = json.loads(request.get_json())
-    invoice_number = data["invoice_number"]
-    email = data["email"]
-    result = data["result"]
-    if result :
-        payment_db.update_payment_status(invoice_number, "COMPLETED")
-        if "BK" in invoice_number :
-            payment_db.update_payment_booking_status(invoice_number, "paid")
-        elif "MB" in invoice_number :
-            requests.put(
-                f"{account_service_url}/update-status-membership/",
-                data=jsonify({
-                    "email": email,
-                    "status": result
-                })
-            )
-    else :
-        payment_db.update_payment_status(invoice_number, "FAILED")
-        if "BK" in invoice_number :
-            payment_db.update_payment_booking_status(invoice_number, "canceled")
-            requests.post(
-                f"{booking_service_url}/cancel/{invoice_number}"
-            )
+    try :
+        data = json.loads(request.get_json())
+        invoice_number = data["invoice_number"]
+        email = data["email"]
+        result = data["result"]
+        if result :
+            payment_db.update_payment_status(invoice_number, "COMPLETED")
+            if "BK" in invoice_number :
+                payment_db.update_payment_booking_status(invoice_number, "paid")
+            elif "MB" in invoice_number :
+                requests.put(
+                    f"{account_service_url}/update-status-membership/",
+                    data=jsonify({
+                        "email": email,
+                        "status": result
+                    })
+                )
+        else :
+            payment_db.update_payment_status(invoice_number, "FAILED")
+            if "BK" in invoice_number :
+                payment_db.update_payment_booking_status(invoice_number, "canceled")
+                requests.post(
+                    f"{booking_service_url}/cancel/{invoice_number}"
+                )
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
+
+# Promo routes
+@app.route("/promo", methods=["POST"])
+def create_promo() :
+    data = request.get_json()
+    try :
+        promo = promo_db.create(data)
+        response = jsonify({
+            "message": f"New promo with id {promo.id} successfully created!👍😀"
+        })    
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
+
+@app.route("/promo", methods=["GET"])
+def get_all_promos() :
+    try :
+        result = [promo.serialize() for promo in promo_db.get_all()]
+        response = jsonify({
+            "result": result
+        })
+        response.status_code = 200
+        return response
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
+
+@app.route("/promo/<id>", methods=["GET"])
+def get_promo_by_id(id) :
+    try :
+        id = escape(id)
+        result = promo_db.get_by_id(id)
+        response = jsonify({
+            "result": result
+        })
+        response.status_code = 200
+        return response
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
+
+@app.route("/promo/<id>", methods=["DELETE"])
+def delete_promo_by_id() :
+    try :
+        id = escape(id)
+        promo_db.delete_by_id(id)
+        return Response(status=204)
+    except Exception as e :
+        response = jsonify({
+            "message": f"Exception occurred⛔! Exception: {e}"
+        })
+        response.status_code = 500
+        return response
 
 @app.after_request 
 def after_request_callback(response): 

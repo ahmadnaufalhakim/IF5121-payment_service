@@ -1,16 +1,15 @@
 class Promo :
-    # Class-level attribute to keep track all promos that are created
-    promos = []
-
-    def __init__(self, name:str, discount:float, max_discount:int, info:str='', min_purchase:int=0) :
+    def __init__(self, id:int, name:str, discount:float, max_discount:int, info:str='', min_purchase:int=0) :
+        self._id = id
         self._name = name
         self._info = info
         self._min_purchase = min_purchase
         self._discount = discount
         self._max_discount = max_discount
-        # Add created promo object to class-level promos attribute
-        Promo.promos.append(self)
     # Getter(s) and setter(s)
+    @property
+    def id(self) :
+        return self._id
     @property
     def name(self) :
         return self._name
@@ -41,10 +40,9 @@ class Promo :
     @max_discount.setter
     def max_discount(self, max_discount) :
         self._max_discount = max_discount
-    # Methods
-    def delete_promo(self) :
-        if self in Promo.promos :
-            Promo.promos.remove(self)
-        del self
     def is_valid(self, amount) :
         return amount >= self.min_purchase
+    def serialize(self) :
+        return {
+            key.strip('_'): value for key, value in vars(self).items()
+        }

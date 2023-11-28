@@ -9,6 +9,7 @@ from models import (
     EWalletOVO,
     QRIS
 )
+from models import Promo
 
 class PaymentDatabase :
     def __init__(self) -> None:
@@ -92,9 +93,49 @@ class PaymentDatabase :
             self.booking_payments[invoice_number].status = status
         elif "MB" in invoice_number :
             self.membership_payments[invoice_number].status = status
+        return
 
     def update_payment_booking_status(self, invoice_number, status) :
         self.booking_payments[invoice_number].booking["status"] = status
+        return
 
     def delete_by_invoice_number(self, invoice_number) :
-        del self.payments[invoice_number]
+        if "BK" in invoice_number and invoice_number in self.booking_payments :
+            del self.booking_payments[invoice_number]
+        elif "MB" in invoice_number and invoice_number in self.membership_payments :
+            del self.membership_payments[invoice_number]
+        return
+
+class PromoDatabase :
+    promo_id_counter = 1
+    def __init__(self) -> None:
+        self.promos = {}
+
+    def create(self, promo:dict) :
+        promo_id = PromoDatabase.promo_id_counter
+        PromoDatabase.promo_id_counter += 1
+        if "info" not in promo :
+            promo["info"] = ''
+        if "min_purchase" not in promo :
+            promo["min_purchase"] = 0
+        self.promos[promo_id] = Promo(
+            promo_id,
+            promo["name"],
+            promo["discount"],
+            promo["max_discount"],
+            promo["info"],
+            promo["min_purchase"]
+        )
+        return self.promos[promo_id]
+
+    def get_all(self) :
+        result = [value for _, value in self.promos.items()]
+        return result
+
+    def get_by_id(self, id) :
+        result = self.promos[id]
+        return result
+
+    def delete_by_id(self, id) :
+        if id in self.promos: del self.promos[id]
+        return
