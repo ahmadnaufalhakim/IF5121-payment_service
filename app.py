@@ -218,7 +218,9 @@ def create_promo() :
         promo = promo_db.create(data)
         response = jsonify({
             "message": f"New promo with id {promo.id} successfully created!👍😀"
-        })    
+        })
+        response.status_code = 200
+        return response
     except Exception as e :
         response = jsonify({
             "message": f"Exception occurred⛔! Exception: {e}"
