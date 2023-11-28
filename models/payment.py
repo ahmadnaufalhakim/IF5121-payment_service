@@ -122,7 +122,7 @@ class BookingPayment(Payment) :
             key.strip('_'): value for key, value in vars(self).items() if key not in ["payment_method", "promo", "status"]
         }
         result["payment_method"] = self.payment_method.serialize()
-        result["promo"] = self.promo.serialize()
+        result["promo"] = self.promo.serialize() if self.promo is not None else None
         result["status"] = self.status.name
         return result
 class MembershipPayment(Payment) :
