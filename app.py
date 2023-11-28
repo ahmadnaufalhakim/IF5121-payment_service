@@ -262,7 +262,7 @@ def get_promo_by_id(id) :
         return response
 
 @app.route("/promo/<id>", methods=["DELETE"])
-def delete_promo_by_id() :
+def delete_promo_by_id(id) :
     try :
         id = int(id)
         promo_db.delete_by_id(id)
